@@ -288,16 +288,17 @@
       }).format(value);
     }
 
-    // Generate month labels starting from next month
-    function generateMonthLabels(count) {
+    // Generate month labels starting from next month (with optional offset)
+    function generateMonthLabels(count, startOffset = 0) {
       const labels = [];
       const today = new Date();
       const currentMonth = today.getMonth();
       const currentYear = today.getFullYear();
 
       for (let i = 1; i <= count; i++) {
-        const monthIndex = (currentMonth + i) % 12;
-        const yearOffset = Math.floor((currentMonth + i) / 12);
+        const monthOffset = startOffset + i;
+        const monthIndex = (currentMonth + monthOffset) % 12;
+        const yearOffset = Math.floor((currentMonth + monthOffset) / 12);
         const year = currentYear + yearOffset;
         const monthName = new Date(year, monthIndex, 1).toLocaleString('en-US', { month: 'short' });
         labels.push(`${monthName} ${year}`);
@@ -314,13 +315,14 @@
       const monthlyGrowth = state.btcGrowthRate / 100 / 12;
 
       const data = {
-        labels: generateMonthLabels(months),
+        labels: [],
         accumulatedCredit: [],
         monthlyInterest: [],
         monthlyWithdrawal: [],
         btcPriceProjection: [],
         maxCreditProjection: [],
-        btcCollateral: []
+        btcCollateral: [],
+        stopMonth: null
       };
 
       let accumulatedCredit = 0;
@@ -350,6 +352,18 @@
         const projectedBtcPrice = state.btcPrice * Math.pow(1 + monthlyGrowth, i);
         const projectedMaxCredit = currentBtcCollateral * projectedBtcPrice * (state.ltvRatio / 100);
 
+        // Check if accumulated credit exceeds max credit line
+        if (accumulatedCredit > projectedMaxCredit && data.stopMonth === null) {
+          data.stopMonth = i;
+        }
+
+        // Stop adding data if we've exceeded the credit line (include one extra month for visibility)
+        if (data.stopMonth !== null && i > data.stopMonth) {
+          break;
+        }
+
+        const monthLabel = generateMonthLabels(1, i)[0];
+        data.labels.push(monthLabel);
         data.accumulatedCredit.push(accumulatedCredit);
         data.monthlyInterest.push(monthlyInterest);
         data.monthlyWithdrawal.push(currentWithdrawal);
