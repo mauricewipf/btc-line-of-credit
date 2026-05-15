@@ -110,6 +110,16 @@
               <div class="form-text">Annual inflation rate (affects monthly withdrawals)</div>
             </div>
 
+            <!-- Pay Interest with BTC -->
+            <div class="mb-3">
+              <label for="payInterestWithBtc" class="form-label">Interest Payment Method</label>
+              <select class="form-select" id="payInterestWithBtc">
+                <option value="false">Accumulate (add to credit)</option>
+                <option value="true">Pay with BTC (sell Bitcoin)</option>
+              </select>
+              <div class="form-text">Choose how to handle monthly interest payments</div>
+            </div>
+
             <div class="info-box">
               <p><strong>Note:</strong> Changes are automatically saved to URL parameters. Share your configuration by copying the URL.</p>
             </div>
@@ -139,7 +149,7 @@
                 <div class="legend-color" style="background: #e71d36;"></div>
                 <span>Monthly Interest</span>
               </div>
-              <div class="legend-item">
+              <div class="legend-item" id="cumulativeInterestLegend">
                 <div class="legend-color" style="background: #00d084;"></div>
                 <span>Cumulative Interest</span>
               </div>
@@ -150,6 +160,10 @@
               <div class="legend-item">
                 <div class="legend-line" style="border-top: 3px dashed #ff9f1c;"></div>
                 <span>Max Credit Line</span>
+              </div>
+              <div class="legend-item" id="btcCollateralLegend" style="display: none;">
+                <div class="legend-line" style="border-top: 3px dashed #8b5cf6;"></div>
+                <span>BTC Collateral Value</span>
               </div>
             </div>
           </div>
@@ -195,7 +209,8 @@
       interestRate: 3.0,
       monthlyRent: 2000,
       inflationRate: 0,
-      btcGrowthRate: 0
+      btcGrowthRate: 0,
+      payInterestWithBtc: false
     };
 
     // State
@@ -212,6 +227,9 @@
       monthlyRent: document.getElementById('monthlyRent'),
       inflationRate: document.getElementById('inflationRate'),
       btcGrowthRate: document.getElementById('btcGrowthRate'),
+      payInterestWithBtc: document.getElementById('payInterestWithBtc'),
+      cumulativeInterestLegend: document.getElementById('cumulativeInterestLegend'),
+      btcCollateralLegend: document.getElementById('btcCollateralLegend'),
       breakdownTable: document.getElementById('breakdownTable')
     };
 
@@ -226,6 +244,7 @@
       if (params.has('rent')) state.monthlyRent = parseFloat(params.get('rent'));
       if (params.has('inflation')) state.inflationRate = parseFloat(params.get('inflation'));
       if (params.has('growth')) state.btcGrowthRate = parseFloat(params.get('growth'));
+      if (params.has('payBtc')) state.payInterestWithBtc = params.get('payBtc') === 'true';
     }
 
     // Update URL with current state
@@ -239,6 +258,7 @@
       if (state.monthlyRent !== defaults.monthlyRent) params.set('rent', state.monthlyRent);
       if (state.inflationRate !== defaults.inflationRate) params.set('inflation', state.inflationRate);
       if (state.btcGrowthRate !== defaults.btcGrowthRate) params.set('growth', state.btcGrowthRate);
+      if (state.payInterestWithBtc !== defaults.payInterestWithBtc) params.set('payBtc', state.payInterestWithBtc);
 
       const newUrl = params.toString()
         ? `${window.location.pathname}?${params.toString()}`
@@ -256,6 +276,7 @@
       elements.monthlyRent.value = state.monthlyRent;
       elements.inflationRate.value = state.inflationRate;
       elements.btcGrowthRate.value = state.btcGrowthRate;
+      elements.payInterestWithBtc.value = state.payInterestWithBtc.toString();
     }
 
     // Calculate max credit line
@@ -305,11 +326,13 @@
         cumulativeInterest: [],
         monthlyWithdrawal: [],
         btcPriceProjection: [],
-        maxCreditProjection: []
+        maxCreditProjection: [],
+        btcCollateral: []
       };
 
       let accumulatedCredit = 0;
       let cumulativeInterest = 0;
+      let currentBtcCollateral = state.btcCollateral;
 
       for (let i = 0; i < months; i++) {
         // Calculate current month withdrawal (with inflation adjustment)
@@ -323,18 +346,29 @@
 
         // Calculate monthly interest on accumulated credit
         const monthlyInterest = accumulatedCredit * monthlyRate;
-        cumulativeInterest += monthlyInterest;
+
+        // Handle interest payment method
+        if (state.payInterestWithBtc) {
+          // Pay interest by selling BTC - interest doesn't accumulate
+          const btcSoldForInterest = monthlyInterest / (state.btcPrice * Math.pow(1 + monthlyGrowth, i));
+          currentBtcCollateral = Math.max(0, currentBtcCollateral - btcSoldForInterest);
+          // Cumulative interest stays at 0 since it's paid off each month
+        } else {
+          // Accumulate interest (add to credit)
+          cumulativeInterest += monthlyInterest;
+        }
 
         // Calculate projected BTC price and max credit line
         const projectedBtcPrice = state.btcPrice * Math.pow(1 + monthlyGrowth, i);
-        const projectedMaxCredit = state.btcCollateral * projectedBtcPrice * (state.ltvRatio / 100);
+        const projectedMaxCredit = currentBtcCollateral * projectedBtcPrice * (state.ltvRatio / 100);
 
         data.accumulatedCredit.push(accumulatedCredit);
         data.monthlyInterest.push(monthlyInterest);
-        data.cumulativeInterest.push(cumulativeInterest);
+        data.cumulativeInterest.push(state.payInterestWithBtc ? 0 : cumulativeInterest);
         data.monthlyWithdrawal.push(currentWithdrawal);
         data.btcPriceProjection.push(projectedBtcPrice);
         data.maxCreditProjection.push(projectedMaxCredit);
+        data.btcCollateral.push(currentBtcCollateral);
       }
 
       return data;
@@ -438,7 +472,19 @@
               tension: 0.4,
               pointRadius: 0,
               pointHitRadius: 10
-            }
+            },
+            ...(state.payInterestWithBtc ? [{
+              label: 'BTC Collateral',
+              data: data.btcCollateral.map(btc => btc * data.btcPriceProjection[data.btcCollateral.indexOf(btc)]),
+              borderColor: '#8b5cf6',
+              backgroundColor: 'transparent',
+              borderDash: [6, 6],
+              borderWidth: 2,
+              fill: false,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHitRadius: 10
+            }] : [])
           ]
         },
         options: {
@@ -535,6 +581,11 @@
       state.monthlyRent = parseFloat(elements.monthlyRent.value) || 0;
       state.inflationRate = parseFloat(elements.inflationRate.value) || 0;
       state.btcGrowthRate = parseFloat(elements.btcGrowthRate.value) || 0;
+      state.payInterestWithBtc = elements.payInterestWithBtc.value === 'true';
+
+      // Update legend visibility
+      elements.cumulativeInterestLegend.style.display = state.payInterestWithBtc ? 'none' : 'flex';
+      elements.btcCollateralLegend.style.display = state.payInterestWithBtc ? 'flex' : 'none';
 
       // Update URL
       updateURL();
@@ -552,7 +603,7 @@
     // Event listeners
     Object.keys(elements).forEach(key => {
       const element = elements[key];
-      if (element && element.tagName === 'INPUT') {
+      if (element && (element.tagName === 'INPUT' || element.tagName === 'SELECT')) {
         element.addEventListener('input', updateAll);
       }
     });
