@@ -315,7 +315,7 @@
       const monthlyGrowth = state.btcGrowthRate / 100 / 12;
 
       const data = {
-        labels: [],
+        labels: generateMonthLabels(months),
         accumulatedCredit: [],
         monthlyInterest: [],
         monthlyWithdrawal: [],
@@ -357,16 +357,11 @@
           data.stopMonth = i;
         }
 
-        // Stop adding data if we've exceeded the credit line (include one extra month for visibility)
-        if (data.stopMonth !== null && i > data.stopMonth) {
-          break;
-        }
-
-        const monthLabel = generateMonthLabels(1, i)[0];
-        data.labels.push(monthLabel);
-        data.accumulatedCredit.push(accumulatedCredit);
-        data.monthlyInterest.push(monthlyInterest);
-        data.monthlyWithdrawal.push(currentWithdrawal);
+        // Use null for user data after stop point (to not render lines), but keep reference data
+        const afterStop = data.stopMonth !== null && i > data.stopMonth;
+        data.accumulatedCredit.push(afterStop ? null : accumulatedCredit);
+        data.monthlyInterest.push(afterStop ? null : monthlyInterest);
+        data.monthlyWithdrawal.push(afterStop ? null : currentWithdrawal);
         data.btcPriceProjection.push(projectedBtcPrice);
         data.maxCreditProjection.push(projectedMaxCredit);
         data.btcCollateral.push(currentBtcCollateral);
@@ -381,11 +376,13 @@
       const maxCredit = calculateMaxCreditLine();
       elements.maxCreditLine.textContent = formatCurrency(maxCredit);
 
-      // Update breakdown table (show all months up to credit limit)
+      // Update breakdown table (show months until data stops)
       const tbody = elements.breakdownTable;
       tbody.innerHTML = '';
 
-      for (let i = 0; i < data.labels.length; i++) {
+      // Only show rows where we have data (not null)
+      const maxRows = data.stopMonth !== null ? data.stopMonth + 1 : data.labels.length;
+      for (let i = 0; i < maxRows && i < data.labels.length; i++) {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${data.labels[i]}</td>
