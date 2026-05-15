@@ -590,14 +590,6 @@
       initChart(data);
     }
 
-    // Event listeners
-    Object.keys(elements).forEach(key => {
-      const element = elements[key];
-      if (element && (element.tagName === 'INPUT' || element.tagName === 'SELECT')) {
-        element.addEventListener('input', updateAll);
-      }
-    });
-
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
       // Initialize elements after DOM is loaded
@@ -614,6 +606,14 @@
         btcCollateralLegend: document.getElementById('btcCollateralLegend'),
         breakdownTable: document.getElementById('breakdownTable')
       };
+
+      // Attach event listeners after elements are initialized
+      Object.keys(elements).forEach(key => {
+        const element = elements[key];
+        if (element && (element.tagName === 'INPUT' || element.tagName === 'SELECT')) {
+          element.addEventListener('input', updateAll);
+        }
+      });
 
       loadStateFromURL();
       updateInputs();
