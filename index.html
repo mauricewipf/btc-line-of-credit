@@ -125,6 +125,17 @@
               <div class="form-text">Annual inflation rate (affects monthly withdrawals)</div>
             </div>
 
+            <!-- Projection Years -->
+            <div class="mb-3">
+              <label for="projectionYears" class="form-label">Projection Years</label>
+              <div class="input-group">
+                <span class="input-group-text">yr</span>
+                <input type="number" class="form-control" id="projectionYears" step="1" min="1" max="100" placeholder="20"
+                  lang="en">
+              </div>
+              <div class="form-text">Number of years to project into the future</div>
+            </div>
+
             <!-- Pay Interest with BTC -->
             <div class="mb-3">
               <label class="form-label">Interest Payment Method</label>
@@ -157,7 +168,7 @@
       <div class="col-lg-8">
         <div class="btc-card">
           <div class="btc-card-header">
-            20-Year Credit Projection
+            <span id="projectionTitle">20-Year</span> Credit Projection
           </div>
           <div class="btc-card-body">
             <!-- Chart -->
@@ -231,7 +242,8 @@
       monthlyRent: 500,
       inflationRate: 2.0,
       btcGrowthRate: 3,
-      payInterestWithBtc: false
+      payInterestWithBtc: false,
+      projectionYears: 20
     };
 
     // State
@@ -314,6 +326,7 @@
       if (params.has('inflation')) state.inflationRate = parseFloat(params.get('inflation'));
       if (params.has('growth')) state.btcGrowthRate = parseFloat(params.get('growth'));
       if (params.has('payBtc')) state.payInterestWithBtc = params.get('payBtc') === 'true';
+      if (params.has('years')) state.projectionYears = parseInt(params.get('years'));
     }
 
     // Update URL with current state
@@ -328,6 +341,7 @@
       if (state.inflationRate !== defaults.inflationRate) params.set('inflation', state.inflationRate);
       if (state.btcGrowthRate !== defaults.btcGrowthRate) params.set('growth', state.btcGrowthRate);
       if (state.payInterestWithBtc !== defaults.payInterestWithBtc) params.set('payBtc', state.payInterestWithBtc);
+      if (state.projectionYears !== defaults.projectionYears) params.set('years', state.projectionYears);
 
       const newUrl = params.toString()
         ? `${window.location.pathname}?${params.toString()}`
@@ -345,6 +359,7 @@
       elements.monthlyRent.value = state.monthlyRent;
       elements.inflationRate.value = state.inflationRate;
       elements.btcGrowthRate.value = state.btcGrowthRate;
+      elements.projectionYears.value = state.projectionYears;
 
       // Set radio button for interest payment method
       if (state.payInterestWithBtc) {
@@ -383,7 +398,7 @@
 
     // Calculate monthly data
     function calculateMonthlyData() {
-      const months = 240; // 20 years
+      const months = state.projectionYears * 12;
       const monthlyRate = state.interestRate / 100 / 12;
       const monthlyInflation = state.inflationRate / 100 / 12;
       const monthlyGrowth = state.btcGrowthRate / 100 / 12;
@@ -482,12 +497,12 @@
         chart.destroy();
       }
 
-      // Create display labels for full 20 years (show every 6th)
+      const labelInterval = Math.max(1, Math.round(state.projectionYears / 3));
       const displayLabels = data.labels.map((label, index) =>
-        index % 6 === 0 ? label : ''
+        index % (labelInterval * 2) === 0 ? label : ''
       );
 
-      // Prepare data: slice user data at stop point, keep reference data for full 20 years
+      // Prepare data: slice user data at stop point, keep reference data for full projection
       const userDataLength = data.stopMonth !== null ? data.stopMonth + 2 : data.labels.length;
       const slicedAccumulatedCredit = data.accumulatedCredit.slice(0, userDataLength);
       const slicedMonthlyInterest = data.monthlyInterest.slice(0, userDataLength);
@@ -651,6 +666,10 @@
       state.inflationRate = parseFloat(elements.inflationRate.value) || 0;
       state.btcGrowthRate = parseFloat(elements.btcGrowthRate.value) || 0;
       state.payInterestWithBtc = elements.payInterestWithBtcSell.checked;
+      state.projectionYears = parseInt(elements.projectionYears.value) || 20;
+
+      // Update projection title
+      document.getElementById('projectionTitle').textContent = state.projectionYears + '-Year';
 
       // Update URL
       updateURL();
@@ -679,7 +698,8 @@
         payInterestWithBtcCash: document.getElementById('payInterestWithBtcCash'),
         payInterestWithBtcSell: document.getElementById('payInterestWithBtcSell'),
         breakdownTable: document.getElementById('breakdownTable'),
-        fetchBtcPrice: document.getElementById('fetchBtcPrice')
+        fetchBtcPrice: document.getElementById('fetchBtcPrice'),
+        projectionYears: document.getElementById('projectionYears')
       };
 
       // Attach event listeners after elements are initialized
