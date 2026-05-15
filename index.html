@@ -76,14 +76,6 @@
               <div class="form-text">Expected annual BTC price increase (affects max credit line)</div>
             </div>
 
-            <!-- Max Credit Line (Calculated) -->
-            <div class="mb-3">
-              <div class="result-box">
-                <div class="result-label">Max Credit Line</div>
-                <div class="result-value highlight" id="maxCreditLine">$50,000.00</div>
-              </div>
-            </div>
-
             <!-- Interest Rate p.a. -->
             <div class="mb-3">
               <label for="interestRate" class="form-label">Interest Rate p.a.</label>
@@ -263,13 +255,6 @@
       elements.payInterestWithBtc.value = state.payInterestWithBtc.toString();
     }
 
-    // Calculate max credit line
-    function calculateMaxCreditLine() {
-      const btcValue = state.btcCollateral * state.btcPrice;
-      const maxCredit = btcValue * (state.ltvRatio / 100);
-      return maxCredit;
-    }
-
     // Format currency
     function formatCurrency(value) {
       return new Intl.NumberFormat('en-US', {
@@ -360,10 +345,6 @@
 
     // Update UI displays
     function updateDisplays(data) {
-      // Max credit line
-      const maxCredit = calculateMaxCreditLine();
-      elements.maxCreditLine.textContent = formatCurrency(maxCredit);
-
       // Update credit limit warning footer
       const warningFooter = document.getElementById('creditLimitWarning');
       const warningMonth = document.getElementById('warningMonth');
@@ -593,7 +574,6 @@
         btcCollateral: document.getElementById('btcCollateral'),
         ltvRatio: document.getElementById('ltvRatio'),
         btcPrice: document.getElementById('btcPrice'),
-        maxCreditLine: document.getElementById('maxCreditLine'),
         interestRate: document.getElementById('interestRate'),
         monthlyRent: document.getElementById('monthlyRent'),
         inflationRate: document.getElementById('inflationRate'),
