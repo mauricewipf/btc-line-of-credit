@@ -359,11 +359,9 @@
           data.stopMonth = i;
         }
 
-        // Use null for user data after stop point (to not render lines), but keep reference data
-        const afterStop = data.stopMonth !== null && i > data.stopMonth;
-        data.accumulatedCredit.push(afterStop ? null : accumulatedCredit);
-        data.monthlyInterest.push(afterStop ? null : monthlyInterest);
-        data.monthlyWithdrawal.push(afterStop ? null : currentWithdrawal);
+        data.accumulatedCredit.push(accumulatedCredit);
+        data.monthlyInterest.push(monthlyInterest);
+        data.monthlyWithdrawal.push(currentWithdrawal);
         data.btcPriceProjection.push(projectedBtcPrice);
         data.maxCreditProjection.push(projectedMaxCredit);
         data.btcCollateral.push(currentBtcCollateral);
@@ -414,13 +412,19 @@
         chart.destroy();
       }
 
-      // Show every 6th label to avoid crowding
-      const displayLabels = data.labels.map((label, index) =>
+      // Slice data arrays to stop point for cleaner chart rendering
+      const effectiveLength = data.stopMonth !== null ? data.stopMonth + 2 : data.labels.length;
+      const slicedLabels = data.labels.slice(0, effectiveLength);
+      const slicedAccumulatedCredit = data.accumulatedCredit.slice(0, effectiveLength);
+      const slicedMonthlyInterest = data.monthlyInterest.slice(0, effectiveLength);
+      const slicedBtcPrice = data.btcPriceProjection.slice(0, effectiveLength);
+      const slicedMaxCredit = data.maxCreditProjection.slice(0, effectiveLength);
+      const slicedBtcCollateral = data.btcCollateral.slice(0, effectiveLength);
+
+      // Create display labels (show every 6th)
+      const displayLabels = slicedLabels.map((label, index) =>
         index % 6 === 0 ? label : ''
       );
-
-      // Use projected values for Bitcoin price and max credit line lines
-      // If growth rate is 0, these will be flat lines
 
       chart = new Chart(ctx, {
         type: 'line',
@@ -429,7 +433,7 @@
           datasets: [
             {
               label: 'Accumulated Credit',
-              data: data.accumulatedCredit,
+              data: slicedAccumulatedCredit,
               borderColor: '#f7931a',
               backgroundColor: 'rgba(247, 147, 26, 0.1)',
               fill: true,
@@ -439,7 +443,7 @@
             },
             {
               label: 'Monthly Interest Burden',
-              data: data.monthlyInterest,
+              data: slicedMonthlyInterest,
               borderColor: '#e71d36',
               backgroundColor: 'rgba(231, 29, 54, 0.1)',
               fill: false,
@@ -450,7 +454,7 @@
             },
             {
               label: 'Bitcoin Price',
-              data: data.btcPriceProjection,
+              data: slicedBtcPrice,
               borderColor: '#00a8e8',
               backgroundColor: 'transparent',
               borderDash: [8, 4],
@@ -462,7 +466,7 @@
             },
             {
               label: 'Max Credit Line',
-              data: data.maxCreditProjection,
+              data: slicedMaxCredit,
               borderColor: '#ff9f1c',
               backgroundColor: 'rgba(255, 159, 28, 0.05)',
               borderDash: [4, 4],
@@ -474,7 +478,7 @@
             },
             ...(state.payInterestWithBtc ? [{
               label: 'BTC Collateral',
-              data: data.btcCollateral.map(btc => btc * data.btcPriceProjection[data.btcCollateral.indexOf(btc)]),
+              data: slicedBtcCollateral.map((btc, idx) => btc * slicedBtcPrice[idx]),
               borderColor: '#8b5cf6',
               backgroundColor: 'transparent',
               borderDash: [6, 6],
