@@ -20,10 +20,6 @@ A web-based calculator to visualize and project Bitcoin-backed line of credit sc
 - **Shareable URLs**: All settings are saved to URL parameters for easy sharing
 - **Monthly Breakdown Table**: Detailed view of the first 12 months
 
-## Live Demo
-
-Visit the calculator at: https://mauricewipf.github.io/btc-line-of-credit
-
 ## What is a Bitcoin Line of Credit?
 
 A Bitcoin line of credit allows you to borrow against your Bitcoin holdings without selling them. This means:
@@ -92,7 +88,7 @@ You can pre-configure the calculator using URL parameters:
 | `growth` | Annual BTC growth rate | `?growth=10` |
 | `payBtc` | Pay interest with BTC | `?payBtc=true` |
 
-**Example**: `https://mauricewipf.github.io/btc-line-of-credit/?btc=2&price=95000&rate=2.5&rent=3000`
+**Example**: `index.html?btc=2&price=95000&rate=2.5&rent=3000`
 
 ## Technology Stack
 
