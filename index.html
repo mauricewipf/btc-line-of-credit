@@ -400,19 +400,15 @@
         chart.destroy();
       }
 
-      // Slice data arrays to stop point for cleaner chart rendering
-      const effectiveLength = data.stopMonth !== null ? data.stopMonth + 2 : data.labels.length;
-      const slicedLabels = data.labels.slice(0, effectiveLength);
-      const slicedAccumulatedCredit = data.accumulatedCredit.slice(0, effectiveLength);
-      const slicedMonthlyInterest = data.monthlyInterest.slice(0, effectiveLength);
-      const slicedBtcPrice = data.btcPriceProjection.slice(0, effectiveLength);
-      const slicedMaxCredit = data.maxCreditProjection.slice(0, effectiveLength);
-      const slicedBtcCollateral = data.btcCollateral.slice(0, effectiveLength);
-
-      // Create display labels (show every 6th)
-      const displayLabels = slicedLabels.map((label, index) =>
+      // Create display labels for full 20 years (show every 6th)
+      const displayLabels = data.labels.map((label, index) =>
         index % 6 === 0 ? label : ''
       );
+
+      // Prepare data: slice user data at stop point, keep reference data for full 20 years
+      const userDataLength = data.stopMonth !== null ? data.stopMonth + 2 : data.labels.length;
+      const slicedAccumulatedCredit = data.accumulatedCredit.slice(0, userDataLength);
+      const slicedMonthlyInterest = data.monthlyInterest.slice(0, userDataLength);
 
       chart = new Chart(ctx, {
         type: 'line',
@@ -442,7 +438,7 @@
             },
             {
               label: 'Bitcoin Price',
-              data: slicedBtcPrice,
+              data: data.btcPriceProjection,
               borderColor: '#00a8e8',
               backgroundColor: 'transparent',
               borderDash: [8, 4],
@@ -454,7 +450,7 @@
             },
             {
               label: 'Max Credit Line',
-              data: slicedMaxCredit,
+              data: data.maxCreditProjection,
               borderColor: '#ff9f1c',
               backgroundColor: 'rgba(255, 159, 28, 0.05)',
               borderDash: [4, 4],
@@ -466,7 +462,7 @@
             },
             ...(state.payInterestWithBtc ? [{
               label: 'BTC Collateral',
-              data: slicedBtcCollateral.map((btc, idx) => btc * slicedBtcPrice[idx]),
+              data: data.btcCollateral.map((btc, idx) => btc * data.btcPriceProjection[idx]),
               borderColor: '#8b5cf6',
               backgroundColor: 'transparent',
               borderDash: [6, 6],
