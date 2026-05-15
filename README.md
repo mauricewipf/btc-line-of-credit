@@ -2,8 +2,6 @@
 
 A web-based calculator to visualize and project Bitcoin-backed line of credit scenarios over a 20-year period. This tool helps you understand how monthly withdrawals, interest rates, and Bitcoin price growth affect your credit line and collateral.
 
-![Bitcoin Line of Credit Calculator](https://github.com/user-attachments/assets/placeholder.png)
-
 ## Features
 
 - **Interactive Chart**: 20-year projection with visual breakdown of accumulated credit, monthly interest, Bitcoin price, max credit line, and Bitcoin net worth
