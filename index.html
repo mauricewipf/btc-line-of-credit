@@ -214,20 +214,8 @@
     let state = { ...defaults };
     let chart = null;
 
-    // Get elements
-    const elements = {
-      btcCollateral: document.getElementById('btcCollateral'),
-      ltvRatio: document.getElementById('ltvRatio'),
-      btcPrice: document.getElementById('btcPrice'),
-      maxCreditLine: document.getElementById('maxCreditLine'),
-      interestRate: document.getElementById('interestRate'),
-      monthlyRent: document.getElementById('monthlyRent'),
-      inflationRate: document.getElementById('inflationRate'),
-      btcGrowthRate: document.getElementById('btcGrowthRate'),
-      payInterestWithBtc: document.getElementById('payInterestWithBtc'),
-      btcCollateralLegend: document.getElementById('btcCollateralLegend'),
-      breakdownTable: document.getElementById('breakdownTable')
-    };
+    // Elements will be initialized after DOM is loaded
+    let elements = {};
 
     // Load state from URL parameters
     function loadStateFromURL() {
@@ -610,10 +598,27 @@
       }
     });
 
-    // Initialize
-    loadStateFromURL();
-    updateInputs();
-    updateAll();
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize elements after DOM is loaded
+      elements = {
+        btcCollateral: document.getElementById('btcCollateral'),
+        ltvRatio: document.getElementById('ltvRatio'),
+        btcPrice: document.getElementById('btcPrice'),
+        maxCreditLine: document.getElementById('maxCreditLine'),
+        interestRate: document.getElementById('interestRate'),
+        monthlyRent: document.getElementById('monthlyRent'),
+        inflationRate: document.getElementById('inflationRate'),
+        btcGrowthRate: document.getElementById('btcGrowthRate'),
+        payInterestWithBtc: document.getElementById('payInterestWithBtc'),
+        btcCollateralLegend: document.getElementById('btcCollateralLegend'),
+        breakdownTable: document.getElementById('breakdownTable')
+      };
+
+      loadStateFromURL();
+      updateInputs();
+      updateAll();
+    });
   </script>
 
   <!-- Credit Limit Warning Footer -->
