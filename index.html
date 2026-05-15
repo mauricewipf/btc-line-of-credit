@@ -12,6 +12,20 @@
   <!-- Custom Theme -->
   <link href="theme.css" rel="stylesheet">
 
+  <!-- Spin animation for refresh button -->
+  <style>
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spin-animation {
+      animation: spin 1s linear infinite;
+    }
+    #fetchBtcPrice {
+      transition: all 0.3s ease;
+    }
+  </style>
+
   <!-- Chart.js -->
   <script src="node_modules/chart.js/dist/chart.umd.js"></script>
 </head>
@@ -43,8 +57,9 @@
               <label for="btcCollateral" class="form-label">BTC Collateral</label>
               <div class="input-group">
                 <span class="input-group-text">₿</span>
-                <input type="number" class="form-control" id="btcCollateral" step="0.01" min="0" placeholder="1.00">
+                <input type="number" class="form-control" id="btcCollateral" step="0.1" min="0" placeholder="1.0" lang="en">
               </div>
+              <div class="form-text">Bitcoin holdings pledged as collateral for the credit line</div>
             </div>
 
             <!-- Max LTV Ratio -->
@@ -52,7 +67,7 @@
               <label for="ltvRatio" class="form-label">Max LTV Ratio</label>
               <div class="input-group">
                 <span class="input-group-text">%</span>
-                <input type="number" class="form-control" id="ltvRatio" step="1" min="0" max="100" placeholder="50">
+                <input type="number" class="form-control" id="ltvRatio" step="1" min="0" max="100" placeholder="50" lang="en">
               </div>
               <div class="form-text">Maximum Loan-to-Value percentage</div>
             </div>
@@ -62,8 +77,12 @@
               <label for="btcPrice" class="form-label">Bitcoin Price</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="btcPrice" step="100" min="0" placeholder="60000">
+                <input type="number" class="form-control" id="btcPrice" step="100" min="0" placeholder="60000" lang="en">
+                <button type="button" class="btn btn-outline-primary" id="fetchBtcPrice" title="Fetch current BTC price from CoinPaprika">
+                  <i class="bi bi-arrow-clockwise" id="fetchBtcPriceIcon"></i>
+                </button>
               </div>
+              <div class="form-text">Click the refresh button to fetch the live price</div>
             </div>
 
             <!-- Bitcoin Price Growth Rate -->
@@ -71,7 +90,7 @@
               <label for="btcGrowthRate" class="form-label">Bitcoin Price Growth (Annual)</label>
               <div class="input-group">
                 <span class="input-group-text">%</span>
-                <input type="number" class="form-control" id="btcGrowthRate" step="1" min="-50" placeholder="3">
+                <input type="number" class="form-control" id="btcGrowthRate" step="1" min="-50" placeholder="3" lang="en">
               </div>
               <div class="form-text">Expected annual BTC price increase (affects max credit line)</div>
             </div>
@@ -81,8 +100,9 @@
               <label for="interestRate" class="form-label">Interest Rate p.a.</label>
               <div class="input-group">
                 <span class="input-group-text">%</span>
-                <input type="number" class="form-control" id="interestRate" step="0.01" min="0" placeholder="3.00">
+                <input type="number" class="form-control" id="interestRate" step="0.1" min="0" placeholder="3.0" lang="en">
               </div>
+              <div class="form-text">Annual interest rate charged on the accumulated credit</div>
             </div>
 
             <!-- Monthly Rent/Withdrawal -->
@@ -90,7 +110,7 @@
               <label for="monthlyRent" class="form-label">Monthly Withdrawal</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="monthlyRent" step="100" min="0" placeholder="1000">
+                <input type="number" class="form-control" id="monthlyRent" step="100" min="0" placeholder="210" lang="en">
               </div>
             </div>
 
@@ -99,18 +119,26 @@
               <label for="inflationRate" class="form-label">Inflation Rate</label>
               <div class="input-group">
                 <span class="input-group-text">%</span>
-                <input type="number" class="form-control" id="inflationRate" step="0.1" min="0" placeholder="0.0">
+                <input type="number" class="form-control" id="inflationRate" step="0.1" min="0" placeholder="2.0" lang="en">
               </div>
               <div class="form-text">Annual inflation rate (affects monthly withdrawals)</div>
             </div>
 
             <!-- Pay Interest with BTC -->
             <div class="mb-3">
-              <label for="payInterestWithBtc" class="form-label">Interest Payment Method</label>
-              <select class="form-select" id="payInterestWithBtc">
-                <option value="false">Pay from cash flow</option>
-                <option value="true">Pay with BTC (sell Bitcoin)</option>
-              </select>
+              <label class="form-label">Interest Payment Method</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="payInterestWithBtc" id="payInterestWithBtcCash" value="false" checked>
+                <label class="form-check-label" for="payInterestWithBtcCash">
+                  Pay from cash flow
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="payInterestWithBtc" id="payInterestWithBtcSell" value="true">
+                <label class="form-check-label" for="payInterestWithBtcSell">
+                  Pay with BTC (sell Bitcoin)
+                </label>
+              </div>
               <div class="form-text">Choose how to pay monthly interest</div>
             </div>
 
@@ -151,9 +179,9 @@
                 <div class="legend-line" style="border-top: 3px dashed #ff9f1c;"></div>
                 <span>Max Credit Line</span>
               </div>
-              <div class="legend-item" id="btcCollateralLegend" style="display: none;">
-                <div class="legend-line" style="border-top: 3px dashed #8b5cf6;"></div>
-                <span>BTC Collateral Value</span>
+              <div class="legend-item">
+                <div class="legend-line" style="border-top: 3px dashed #22c55e;"></div>
+                <span>Bitcoin Net Worth</span>
               </div>
             </div>
           </div>
@@ -196,8 +224,8 @@
       ltvRatio: 50,
       btcPrice: 100000,
       interestRate: 3.0,
-      monthlyRent: 1000,
-      inflationRate: 0,
+      monthlyRent: 210,
+      inflationRate: 2.0,
       btcGrowthRate: 3,
       payInterestWithBtc: false
     };
@@ -209,6 +237,70 @@
     // Elements will be initialized after DOM is loaded
     let elements = {};
 
+    // CoinPaprika API configuration
+    const COINPAPRIKA_API_URL = 'https://api.coinpaprika.com/v1/tickers/btc-bitcoin';
+
+    // Fetch current BTC price from CoinPaprika
+    async function fetchBtcPriceFromAPI() {
+      const fetchBtn = elements.fetchBtcPrice;
+      const fetchIcon = elements.fetchBtcPriceIcon;
+
+      // Show loading state
+      fetchBtn.disabled = true;
+      fetchIcon.classList.add('spin-animation');
+
+      try {
+        const response = await fetch(COINPAPRIKA_API_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const price = data.quotes.USD.price;
+
+        // Round to nearest dollar
+        const roundedPrice = Math.round(price);
+
+        // Update input and state
+        elements.btcPrice.value = roundedPrice;
+        state.btcPrice = roundedPrice;
+
+        // Update calculations
+        updateAll();
+
+        // Show success feedback briefly
+        fetchBtn.classList.remove('btn-outline-primary');
+        fetchBtn.classList.add('btn-success');
+        setTimeout(() => {
+          fetchBtn.classList.remove('btn-success');
+          fetchBtn.classList.add('btn-outline-primary');
+        }, 1000);
+
+        return roundedPrice;
+      } catch (error) {
+        console.error('Failed to fetch BTC price:', error);
+
+        // Use fallback price
+        const fallbackPrice = 100000;
+        elements.btcPrice.value = fallbackPrice;
+        state.btcPrice = fallbackPrice;
+        updateAll();
+
+        // Show warning feedback
+        fetchBtn.classList.remove('btn-outline-primary');
+        fetchBtn.classList.add('btn-warning');
+        setTimeout(() => {
+          fetchBtn.classList.remove('btn-warning');
+          fetchBtn.classList.add('btn-outline-primary');
+        }, 1500);
+
+        console.log(`API failed, using fallback BTC price: $${fallbackPrice}`);
+        return fallbackPrice;
+      } finally {
+        fetchBtn.disabled = false;
+        fetchIcon.classList.remove('spin-animation');
+      }
+    }
+
     // Load state from URL parameters
     function loadStateFromURL() {
       const params = new URLSearchParams(window.location.search);
@@ -217,7 +309,7 @@
       if (params.has('ltv')) state.ltvRatio = parseFloat(params.get('ltv'));
       if (params.has('price')) state.btcPrice = parseFloat(params.get('price'));
       if (params.has('rate')) state.interestRate = parseFloat(params.get('rate'));
-      if (params.has('rent')) state.monthlyRent = parseFloat(params.get('rent'));
+      if (params.has('withdrawal')) state.monthlyRent = parseFloat(params.get('withdrawal'));
       if (params.has('inflation')) state.inflationRate = parseFloat(params.get('inflation'));
       if (params.has('growth')) state.btcGrowthRate = parseFloat(params.get('growth'));
       if (params.has('payBtc')) state.payInterestWithBtc = params.get('payBtc') === 'true';
@@ -231,7 +323,7 @@
       if (state.ltvRatio !== defaults.ltvRatio) params.set('ltv', state.ltvRatio);
       if (state.btcPrice !== defaults.btcPrice) params.set('price', state.btcPrice);
       if (state.interestRate !== defaults.interestRate) params.set('rate', state.interestRate);
-      if (state.monthlyRent !== defaults.monthlyRent) params.set('rent', state.monthlyRent);
+      if (state.monthlyRent !== defaults.monthlyRent) params.set('withdrawal', state.monthlyRent);
       if (state.inflationRate !== defaults.inflationRate) params.set('inflation', state.inflationRate);
       if (state.btcGrowthRate !== defaults.btcGrowthRate) params.set('growth', state.btcGrowthRate);
       if (state.payInterestWithBtc !== defaults.payInterestWithBtc) params.set('payBtc', state.payInterestWithBtc);
@@ -252,7 +344,13 @@
       elements.monthlyRent.value = state.monthlyRent;
       elements.inflationRate.value = state.inflationRate;
       elements.btcGrowthRate.value = state.btcGrowthRate;
-      elements.payInterestWithBtc.value = state.payInterestWithBtc.toString();
+
+      // Set radio button for interest payment method
+      if (state.payInterestWithBtc) {
+        elements.payInterestWithBtcSell.checked = true;
+      } else {
+        elements.payInterestWithBtcCash.checked = true;
+      }
     }
 
     // Format currency
@@ -297,6 +395,7 @@
         btcPriceProjection: [],
         maxCreditProjection: [],
         btcCollateral: [],
+        btcNetWorth: [],
         stopMonth: null
       };
 
@@ -338,6 +437,7 @@
         data.btcPriceProjection.push(projectedBtcPrice);
         data.maxCreditProjection.push(projectedMaxCredit);
         data.btcCollateral.push(currentBtcCollateral);
+        data.btcNetWorth.push(currentBtcCollateral * projectedBtcPrice);
       }
 
       return data;
@@ -441,18 +541,18 @@
               pointRadius: 0,
               pointHitRadius: 10
             },
-            ...(state.payInterestWithBtc ? [{
-              label: 'BTC Collateral',
-              data: data.btcCollateral.map((btc, idx) => btc * data.btcPriceProjection[idx]),
-              borderColor: '#8b5cf6',
+            {
+              label: 'Bitcoin Net Worth',
+              data: data.btcNetWorth,
+              borderColor: '#22c55e',
               backgroundColor: 'transparent',
-              borderDash: [6, 6],
+              borderDash: [10, 5],
               borderWidth: 2,
               fill: false,
               tension: 0.4,
               pointRadius: 0,
               pointHitRadius: 10
-            }] : [])
+            }
           ]
         },
         options: {
@@ -549,10 +649,7 @@
       state.monthlyRent = parseFloat(elements.monthlyRent.value) || 0;
       state.inflationRate = parseFloat(elements.inflationRate.value) || 0;
       state.btcGrowthRate = parseFloat(elements.btcGrowthRate.value) || 0;
-      state.payInterestWithBtc = elements.payInterestWithBtc.value === 'true';
-
-      // Update legend visibility
-      elements.btcCollateralLegend.style.display = state.payInterestWithBtc ? 'flex' : 'none';
+      state.payInterestWithBtc = elements.payInterestWithBtcSell.checked;
 
       // Update URL
       updateURL();
@@ -578,9 +675,11 @@
         monthlyRent: document.getElementById('monthlyRent'),
         inflationRate: document.getElementById('inflationRate'),
         btcGrowthRate: document.getElementById('btcGrowthRate'),
-        payInterestWithBtc: document.getElementById('payInterestWithBtc'),
-        btcCollateralLegend: document.getElementById('btcCollateralLegend'),
-        breakdownTable: document.getElementById('breakdownTable')
+        payInterestWithBtcCash: document.getElementById('payInterestWithBtcCash'),
+        payInterestWithBtcSell: document.getElementById('payInterestWithBtcSell'),
+        breakdownTable: document.getElementById('breakdownTable'),
+        fetchBtcPrice: document.getElementById('fetchBtcPrice'),
+        fetchBtcPriceIcon: document.getElementById('fetchBtcPriceIcon')
       };
 
       // Attach event listeners after elements are initialized
@@ -588,12 +687,35 @@
         const element = elements[key];
         if (element && (element.tagName === 'INPUT' || element.tagName === 'SELECT')) {
           element.addEventListener('input', updateAll);
+          element.addEventListener('change', updateAll);
+
+          // Normalize decimal separator: replace comma with dot for number inputs
+          if (element.type === 'number') {
+            element.addEventListener('blur', function() {
+              if (this.value.includes(',')) {
+                this.value = this.value.replace(/,/g, '.');
+                updateAll();
+              }
+            });
+          }
         }
       });
+
+      // Attach fetch button click handler
+      if (elements.fetchBtcPrice) {
+        elements.fetchBtcPrice.addEventListener('click', fetchBtcPriceFromAPI);
+      }
 
       loadStateFromURL();
       updateInputs();
       updateAll();
+
+      // Auto-fetch BTC price if not provided in URL and using default
+      const params = new URLSearchParams(window.location.search);
+      if (!params.has('price')) {
+        // No price in URL, fetch current price from API
+        fetchBtcPriceFromAPI();
+      }
     });
   </script>
 
