@@ -1,0 +1,12 @@
+{
+  "name": "btc-line-of-credit",
+  "version": "1.0.0",
+  "description": "Bitcoin Line of Credit Visualization",
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "chart.js": "^4.4.1"
+  }
+}

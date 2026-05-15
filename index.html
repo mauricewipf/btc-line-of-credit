@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitcoin Line of Credit Calculator</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom Theme -->
+  <link href="theme.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="node_modules/chart.js/dist/chart.umd.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container">
+      <div class="row">
+        <div class="col-12 text-center">
+          <h1>B Bitcoin Line of Credit Calculator</h1>
+          <p>Visualize your Bitcoin-backed credit over time</p>
+          <a href="https://strike.me/en/blog/introducing-the-bitcoin-backed-line-of-credit/" target="_blank" rel="noopener noreferrer" class="header-link">What is a Bitcoin Line of Credit?</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <!-- Input Section -->
+      <div class="col-lg-4">
+        <div class="btc-card">
+          <div class="btc-card-header">
+            <i class="bi bi-sliders"></i> Configuration
+          </div>
+          <div class="btc-card-body">
+            <!-- BTC Collateral -->
+            <div class="mb-3">
+              <label for="btcCollateral" class="form-label">BTC Collateral</label>
+              <div class="input-group">
+                <span class="input-group-text">₿</span>
+                <input type="number" class="form-control" id="btcCollateral" step="0.01" min="0" placeholder="1.00">
+              </div>
+            </div>
+
+            <!-- Max LTV Ratio -->
+            <div class="mb-3">
+              <label for="ltvRatio" class="form-label">Max LTV Ratio</label>
+              <div class="input-group">
+                <span class="input-group-text">%</span>
+                <input type="number" class="form-control" id="ltvRatio" step="1" min="0" max="100" placeholder="50">
+              </div>
+              <div class="form-text">Maximum Loan-to-Value percentage</div>
+            </div>
+
+            <!-- Bitcoin Price -->
+            <div class="mb-3">
+              <label for="btcPrice" class="form-label">Bitcoin Price</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" id="btcPrice" step="100" min="0" placeholder="60000">
+              </div>
+            </div>
+
+            <!-- Bitcoin Price Growth Rate -->
+            <div class="mb-3">
+              <label for="btcGrowthRate" class="form-label">Bitcoin Price Growth (Annual)</label>
+              <div class="input-group">
+                <span class="input-group-text">%</span>
+                <input type="number" class="form-control" id="btcGrowthRate" step="1" min="-50" placeholder="0">
+              </div>
+              <div class="form-text">Expected annual BTC price increase (affects max credit line)</div>
+            </div>
+
+            <!-- Max Credit Line (Calculated) -->
+            <div class="mb-3">
+              <div class="result-box">
+                <div class="result-label">Max Credit Line</div>
+                <div class="result-value highlight" id="maxCreditLine">$50,000.00</div>
+              </div>
+            </div>
+
+            <!-- Interest Rate p.a. -->
+            <div class="mb-3">
+              <label for="interestRate" class="form-label">Interest Rate p.a.</label>
+              <div class="input-group">
+                <span class="input-group-text">%</span>
+                <input type="number" class="form-control" id="interestRate" step="0.01" min="0" placeholder="3.00">
+              </div>
+            </div>
+
+            <!-- Monthly Rent/Withdrawal -->
+            <div class="mb-3">
+              <label for="monthlyRent" class="form-label">Monthly Withdrawal</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" id="monthlyRent" step="100" min="0" placeholder="2000">
+              </div>
+            </div>
+
+            <!-- Inflation Rate -->
+            <div class="mb-3">
+              <label for="inflationRate" class="form-label">Inflation Rate</label>
+              <div class="input-group">
+                <span class="input-group-text">%</span>
+                <input type="number" class="form-control" id="inflationRate" step="0.1" min="0" placeholder="0.0">
+              </div>
+              <div class="form-text">Annual inflation rate (affects monthly withdrawals)</div>
+            </div>
+
+            <div class="info-box">
+              <p><strong>Note:</strong> Changes are automatically saved to URL parameters. Share your configuration by copying the URL.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="col-lg-8">
+        <div class="btc-card">
+          <div class="btc-card-header">
+            5-Year Credit Projection
+          </div>
+          <div class="btc-card-body">
+            <!-- Chart -->
+            <div class="chart-container">
+              <canvas id="creditChart"></canvas>
+            </div>
+
+            <!-- Legend -->
+            <div class="d-flex justify-content-center gap-3 mt-3 flex-wrap">
+              <div class="legend-item">
+                <div class="legend-color" style="background: #f7931a;"></div>
+                <span>Accumulated Credit</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color" style="background: #e71d36;"></div>
+                <span>Monthly Interest</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color" style="background: #00d084;"></div>
+                <span>Cumulative Interest</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-line" style="border-top: 3px dashed #00a8e8;"></div>
+                <span>Bitcoin Price</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-line" style="border-top: 3px dashed #ff9f1c;"></div>
+                <span>Max Credit Line</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="btc-card">
+          <div class="btc-card-header">
+            Monthly Breakdown (First 12 Months)
+          </div>
+          <div class="btc-card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Month</th>
+                    <th>Withdrawal</th>
+                    <th>Accumulated Credit</th>
+                    <th>Monthly Interest</th>
+                    <th>Cumulative Interest</th>
+                  </tr>
+                </thead>
+                <tbody id="breakdownTable">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Default values
+    const defaults = {
+      btcCollateral: 1,
+      ltvRatio: 50,
+      btcPrice: 100000,
+      interestRate: 3.0,
+      monthlyRent: 2000,
+      inflationRate: 0,
+      btcGrowthRate: 0
+    };
+
+    // State
+    let state = { ...defaults };
+    let chart = null;
+
+    // Get elements
+    const elements = {
+      btcCollateral: document.getElementById('btcCollateral'),
+      ltvRatio: document.getElementById('ltvRatio'),
+      btcPrice: document.getElementById('btcPrice'),
+      maxCreditLine: document.getElementById('maxCreditLine'),
+      interestRate: document.getElementById('interestRate'),
+      monthlyRent: document.getElementById('monthlyRent'),
+      inflationRate: document.getElementById('inflationRate'),
+      btcGrowthRate: document.getElementById('btcGrowthRate'),
+      breakdownTable: document.getElementById('breakdownTable')
+    };
+
+    // Load state from URL parameters
+    function loadStateFromURL() {
+      const params = new URLSearchParams(window.location.search);
+
+      if (params.has('btc')) state.btcCollateral = parseFloat(params.get('btc'));
+      if (params.has('ltv')) state.ltvRatio = parseFloat(params.get('ltv'));
+      if (params.has('price')) state.btcPrice = parseFloat(params.get('price'));
+      if (params.has('rate')) state.interestRate = parseFloat(params.get('rate'));
+      if (params.has('rent')) state.monthlyRent = parseFloat(params.get('rent'));
+      if (params.has('inflation')) state.inflationRate = parseFloat(params.get('inflation'));
+      if (params.has('growth')) state.btcGrowthRate = parseFloat(params.get('growth'));
+    }
+
+    // Update URL with current state
+    function updateURL() {
+      const params = new URLSearchParams();
+
+      if (state.btcCollateral !== defaults.btcCollateral) params.set('btc', state.btcCollateral);
+      if (state.ltvRatio !== defaults.ltvRatio) params.set('ltv', state.ltvRatio);
+      if (state.btcPrice !== defaults.btcPrice) params.set('price', state.btcPrice);
+      if (state.interestRate !== defaults.interestRate) params.set('rate', state.interestRate);
+      if (state.monthlyRent !== defaults.monthlyRent) params.set('rent', state.monthlyRent);
+      if (state.inflationRate !== defaults.inflationRate) params.set('inflation', state.inflationRate);
+      if (state.btcGrowthRate !== defaults.btcGrowthRate) params.set('growth', state.btcGrowthRate);
+
+      const newUrl = params.toString()
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    // Update input fields from state
+    function updateInputs() {
+      elements.btcCollateral.value = state.btcCollateral;
+      elements.ltvRatio.value = state.ltvRatio;
+      elements.btcPrice.value = state.btcPrice;
+      elements.interestRate.value = state.interestRate;
+      elements.monthlyRent.value = state.monthlyRent;
+      elements.inflationRate.value = state.inflationRate;
+      elements.btcGrowthRate.value = state.btcGrowthRate;
+    }
+
+    // Calculate max credit line
+    function calculateMaxCreditLine() {
+      const btcValue = state.btcCollateral * state.btcPrice;
+      const maxCredit = btcValue * (state.ltvRatio / 100);
+      return maxCredit;
+    }
+
+    // Format currency
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(value);
+    }
+
+    // Generate month labels starting from next month
+    function generateMonthLabels(count) {
+      const labels = [];
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+
+      for (let i = 1; i <= count; i++) {
+        const monthIndex = (currentMonth + i) % 12;
+        const yearOffset = Math.floor((currentMonth + i) / 12);
+        const year = currentYear + yearOffset;
+        const monthName = new Date(year, monthIndex, 1).toLocaleString('en-US', { month: 'short' });
+        labels.push(`${monthName} ${year}`);
+      }
+
+      return labels;
+    }
+
+    // Calculate monthly data
+    function calculateMonthlyData() {
+      const months = 60; // 5 years
+      const monthlyRate = state.interestRate / 100 / 12;
+      const monthlyInflation = state.inflationRate / 100 / 12;
+      const monthlyGrowth = state.btcGrowthRate / 100 / 12;
+
+      const data = {
+        labels: generateMonthLabels(months),
+        accumulatedCredit: [],
+        monthlyInterest: [],
+        cumulativeInterest: [],
+        monthlyWithdrawal: [],
+        btcPriceProjection: [],
+        maxCreditProjection: []
+      };
+
+      let accumulatedCredit = 0;
+      let cumulativeInterest = 0;
+
+      for (let i = 0; i < months; i++) {
+        // Calculate current month withdrawal (with inflation adjustment)
+        let currentWithdrawal = state.monthlyRent;
+        if (state.inflationRate > 0) {
+          currentWithdrawal = state.monthlyRent * Math.pow(1 + monthlyInflation, i);
+        }
+
+        // Add withdrawal to credit
+        accumulatedCredit += currentWithdrawal;
+
+        // Calculate monthly interest on accumulated credit
+        const monthlyInterest = accumulatedCredit * monthlyRate;
+        cumulativeInterest += monthlyInterest;
+
+        // Calculate projected BTC price and max credit line
+        const projectedBtcPrice = state.btcPrice * Math.pow(1 + monthlyGrowth, i);
+        const projectedMaxCredit = state.btcCollateral * projectedBtcPrice * (state.ltvRatio / 100);
+
+        data.accumulatedCredit.push(accumulatedCredit);
+        data.monthlyInterest.push(monthlyInterest);
+        data.cumulativeInterest.push(cumulativeInterest);
+        data.monthlyWithdrawal.push(currentWithdrawal);
+        data.btcPriceProjection.push(projectedBtcPrice);
+        data.maxCreditProjection.push(projectedMaxCredit);
+      }
+
+      return data;
+    }
+
+    // Update UI displays
+    function updateDisplays(data) {
+      // Max credit line
+      const maxCredit = calculateMaxCreditLine();
+      elements.maxCreditLine.textContent = formatCurrency(maxCredit);
+
+      // Update breakdown table (first 12 months)
+      const tbody = elements.breakdownTable;
+      tbody.innerHTML = '';
+
+      for (let i = 0; i < 12 && i < data.labels.length; i++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${data.labels[i]}</td>
+          <td>${formatCurrency(data.monthlyWithdrawal[i])}</td>
+          <td>${formatCurrency(data.accumulatedCredit[i])}</td>
+          <td>${formatCurrency(data.monthlyInterest[i])}</td>
+          <td>${formatCurrency(data.cumulativeInterest[i])}</td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    // Initialize or update chart
+    function initChart(data) {
+      const ctx = document.getElementById('creditChart').getContext('2d');
+
+      if (chart) {
+        chart.destroy();
+      }
+
+      // Show every 6th label to avoid crowding
+      const displayLabels = data.labels.map((label, index) =>
+        index % 6 === 0 ? label : ''
+      );
+
+      // Use projected values for Bitcoin price and max credit line lines
+      // If growth rate is 0, these will be flat lines
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: displayLabels,
+          datasets: [
+            {
+              label: 'Accumulated Credit',
+              data: data.accumulatedCredit,
+              borderColor: '#f7931a',
+              backgroundColor: 'rgba(247, 147, 26, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHitRadius: 10
+            },
+            {
+              label: 'Monthly Interest Burden',
+              data: data.monthlyInterest,
+              borderColor: '#e71d36',
+              backgroundColor: 'rgba(231, 29, 54, 0.1)',
+              fill: false,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHitRadius: 10,
+              yAxisID: 'y1'
+            },
+            {
+              label: 'Cumulative Interest',
+              data: data.cumulativeInterest,
+              borderColor: '#00d084',
+              backgroundColor: 'rgba(0, 208, 132, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHitRadius: 10
+            },
+            {
+              label: 'Bitcoin Price',
+              data: data.btcPriceProjection,
+              borderColor: '#00a8e8',
+              backgroundColor: 'transparent',
+              borderDash: [8, 4],
+              borderWidth: 2,
+              fill: false,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHitRadius: 10
+            },
+            {
+              label: 'Max Credit Line',
+              data: data.maxCreditProjection,
+              borderColor: '#ff9f1c',
+              backgroundColor: 'rgba(255, 159, 28, 0.05)',
+              borderDash: [4, 4],
+              borderWidth: 2,
+              fill: false,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHitRadius: 10
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(26, 31, 46, 0.95)',
+              titleColor: '#f7931a',
+              bodyColor: '#fff',
+              borderColor: '#f7931a',
+              borderWidth: 1,
+              callbacks: {
+                title: function(context) {
+                  // Show full label in tooltip
+                  const index = context[0].dataIndex;
+                  return data.labels[index];
+                },
+                label: function(context) {
+                  const value = context.parsed.y;
+                  return `${context.dataset.label}: ${formatCurrency(value)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                maxRotation: 45,
+                minRotation: 45,
+                color: '#6c757d'
+              }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Amount ($)',
+                color: '#1a1f2e'
+              },
+              ticks: {
+                callback: function(value) {
+                  return '$' + (value / 1000).toFixed(0) + 'k';
+                },
+                color: '#6c757d'
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Monthly Interest ($)',
+                color: '#e71d36'
+              },
+              ticks: {
+                callback: function(value) {
+                  return '$' + value.toFixed(0);
+                },
+                color: '#e71d36'
+              },
+              grid: {
+                drawOnChartArea: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Main update function
+    function updateAll() {
+      // Update state from inputs
+      state.btcCollateral = parseFloat(elements.btcCollateral.value) || 0;
+      state.ltvRatio = parseFloat(elements.ltvRatio.value) || 0;
+      state.btcPrice = parseFloat(elements.btcPrice.value) || 0;
+      state.interestRate = parseFloat(elements.interestRate.value) || 0;
+      state.monthlyRent = parseFloat(elements.monthlyRent.value) || 0;
+      state.inflationRate = parseFloat(elements.inflationRate.value) || 0;
+      state.btcGrowthRate = parseFloat(elements.btcGrowthRate.value) || 0;
+
+      // Update URL
+      updateURL();
+
+      // Calculate data
+      const data = calculateMonthlyData();
+
+      // Update displays
+      updateDisplays(data);
+
+      // Update chart
+      initChart(data);
+    }
+
+    // Event listeners
+    Object.keys(elements).forEach(key => {
+      const element = elements[key];
+      if (element && element.tagName === 'INPUT') {
+        element.addEventListener('input', updateAll);
+      }
+    });
+
+    // Initialize
+    loadStateFromURL();
+    updateInputs();
+    updateAll();
+  </script>
+</body>
+</html>

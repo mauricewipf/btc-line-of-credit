@@ -1,0 +1,241 @@
+/* Bitcoin Line of Credit - Custom Bootstrap Theme */
+
+:root {
+  --bs-primary: #f7931a;
+  --bs-primary-rgb: 247, 147, 26;
+  --bs-secondary: #1a1f2e;
+  --bs-secondary-rgb: 26, 31, 46;
+  --bs-success: #00d084;
+  --bs-success-rgb: 0, 208, 132;
+  --bs-info: #00a8e8;
+  --bs-info-rgb: 0, 168, 232;
+  --bs-warning: #ff9f1c;
+  --bs-warning-rgb: 255, 159, 28;
+  --bs-danger: #e71d36;
+  --bs-danger-rgb: 231, 29, 54;
+  --bs-light: #f8f9fa;
+  --bs-light-rgb: 248, 249, 250;
+  --bs-dark: #0d1117;
+  --bs-dark-rgb: 13, 17, 23;
+
+  /* Custom colors */
+  --btc-orange: #f7931a;
+  --btc-dark: #1a1f2e;
+  --btc-card-bg: #ffffff;
+  --btc-input-bg: #f8f9fa;
+  --btc-border: #e9ecef;
+  --btc-text-muted: #6c757d;
+}
+
+body {
+  background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Header Styling */
+.app-header {
+  background: linear-gradient(135deg, var(--btc-orange) 0%, #e8850a 100%);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(247, 147, 26, 0.3);
+}
+
+.app-header h1 {
+  font-weight: 700;
+  font-size: 2.5rem;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.app-header p {
+  margin: 0.5rem 0 0.5rem 0;
+  opacity: 0.95;
+  font-size: 1.1rem;
+}
+
+.header-link {
+  display: inline-block;
+  color: white;
+  text-decoration: underline;
+  font-size: 0.9rem;
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
+
+.header-link:hover {
+  opacity: 1;
+  color: white;
+}
+
+/* Card Styling */
+.btc-card {
+  background: var(--btc-card-bg);
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.btc-card-header {
+  background: linear-gradient(135deg, var(--btc-dark) 0%, #2d3548 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.btc-card-body {
+  padding: 1.5rem;
+}
+
+/* Input Styling */
+.input-group-text {
+  background: var(--btc-input-bg);
+  border: 2px solid var(--btc-border);
+  border-right: none;
+  color: var(--btc-text-muted);
+  font-weight: 500;
+  min-width: 50px;
+  justify-content: center;
+}
+
+.form-control {
+  border: 2px solid var(--btc-border);
+  border-left: none;
+  background: var(--btc-input-bg);
+  font-weight: 500;
+  font-size: 1.1rem;
+  padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+  box-shadow: none;
+  border-color: var(--btc-orange);
+  background: white;
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--btc-dark);
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* Result/Display Boxes */
+.result-box {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border-left: 4px solid var(--btc-orange);
+}
+
+.result-label {
+  font-size: 0.875rem;
+  color: var(--btc-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.result-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--btc-dark);
+}
+
+.result-value.highlight {
+  color: var(--btc-orange);
+}
+
+/* Chart Container */
+.chart-container {
+  position: relative;
+  height: 450px;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* Info Box */
+.info-box {
+  background: rgba(247, 147, 26, 0.1);
+  border: 1px solid rgba(247, 147, 26, 0.2);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.info-box p {
+  margin: 0;
+  color: var(--btc-dark);
+  font-size: 0.95rem;
+}
+
+/* Buttons */
+.btn-btc {
+  background: linear-gradient(135deg, var(--btc-orange) 0%, #e8850a 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-btc:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(247, 147, 26, 0.4);
+  color: white;
+}
+
+/* Legend/Key Items */
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--btc-dark);
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.legend-line {
+  width: 24px;
+  height: 0;
+  border-radius: 2px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .chart-container {
+    height: 350px;
+  }
+
+  .result-value {
+    font-size: 1.25rem;
+  }
+}
+
+/* Animation for value updates */
+@keyframes valueUpdate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.value-updating {
+  animation: valueUpdate 0.3s ease;
+}
