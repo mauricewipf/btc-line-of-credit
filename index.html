@@ -7,6 +7,8 @@
 
   <!-- Bootstrap CSS -->
   <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- Custom Theme -->
   <link href="theme.css" rel="stylesheet">
 
@@ -376,6 +378,16 @@
       const maxCredit = calculateMaxCreditLine();
       elements.maxCreditLine.textContent = formatCurrency(maxCredit);
 
+      // Update credit limit warning footer
+      const warningFooter = document.getElementById('creditLimitWarning');
+      const warningMonth = document.getElementById('warningMonth');
+      if (data.stopMonth !== null) {
+        warningFooter.style.display = 'block';
+        warningMonth.textContent = data.stopMonth + 1;
+      } else {
+        warningFooter.style.display = 'none';
+      }
+
       // Update breakdown table (show months until data stops)
       const tbody = elements.breakdownTable;
       tbody.innerHTML = '';
@@ -599,5 +611,15 @@
     updateInputs();
     updateAll();
   </script>
+
+  <!-- Credit Limit Warning Footer -->
+  <div id="creditLimitWarning" class="credit-limit-warning" style="display: none;">
+    <div class="container">
+      <div class="warning-content">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span><strong>Warning:</strong> Accumulated credit exceeds maximum credit line at month <span id="warningMonth"></span></span>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
