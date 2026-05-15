@@ -131,7 +131,7 @@
       <div class="col-lg-8">
         <div class="btc-card">
           <div class="btc-card-header">
-            5-Year Credit Projection
+            20-Year Credit Projection
           </div>
           <div class="btc-card-body">
             <!-- Chart -->
@@ -148,10 +148,6 @@
               <div class="legend-item">
                 <div class="legend-color" style="background: #e71d36;"></div>
                 <span>Monthly Interest</span>
-              </div>
-              <div class="legend-item" id="cumulativeInterestLegend">
-                <div class="legend-color" style="background: #00d084;"></div>
-                <span>Cumulative Interest</span>
               </div>
               <div class="legend-item">
                 <div class="legend-line" style="border-top: 3px dashed #00a8e8;"></div>
@@ -172,7 +168,7 @@
         <!-- Data Table -->
         <div class="btc-card">
           <div class="btc-card-header">
-            Monthly Breakdown (First 12 Months)
+            Monthly Breakdown (First 24 Months)
           </div>
           <div class="btc-card-body">
             <div class="table-responsive">
@@ -183,7 +179,6 @@
                     <th>Withdrawal</th>
                     <th>Accumulated Credit</th>
                     <th>Monthly Interest</th>
-                    <th>Cumulative Interest</th>
                   </tr>
                 </thead>
                 <tbody id="breakdownTable">
@@ -228,7 +223,6 @@
       inflationRate: document.getElementById('inflationRate'),
       btcGrowthRate: document.getElementById('btcGrowthRate'),
       payInterestWithBtc: document.getElementById('payInterestWithBtc'),
-      cumulativeInterestLegend: document.getElementById('cumulativeInterestLegend'),
       btcCollateralLegend: document.getElementById('btcCollateralLegend'),
       breakdownTable: document.getElementById('breakdownTable')
     };
@@ -314,7 +308,7 @@
 
     // Calculate monthly data
     function calculateMonthlyData() {
-      const months = 60; // 5 years
+      const months = 240; // 20 years
       const monthlyRate = state.interestRate / 100 / 12;
       const monthlyInflation = state.inflationRate / 100 / 12;
       const monthlyGrowth = state.btcGrowthRate / 100 / 12;
@@ -323,7 +317,6 @@
         labels: generateMonthLabels(months),
         accumulatedCredit: [],
         monthlyInterest: [],
-        cumulativeInterest: [],
         monthlyWithdrawal: [],
         btcPriceProjection: [],
         maxCreditProjection: [],
@@ -331,7 +324,6 @@
       };
 
       let accumulatedCredit = 0;
-      let cumulativeInterest = 0;
       let currentBtcCollateral = state.btcCollateral;
 
       for (let i = 0; i < months; i++) {
@@ -349,13 +341,9 @@
 
         // Handle interest payment method
         if (state.payInterestWithBtc) {
-          // Pay interest by selling BTC - interest doesn't accumulate
+          // Pay interest by selling BTC - reduce collateral
           const btcSoldForInterest = monthlyInterest / (state.btcPrice * Math.pow(1 + monthlyGrowth, i));
           currentBtcCollateral = Math.max(0, currentBtcCollateral - btcSoldForInterest);
-          // Cumulative interest stays at 0 since it's paid off each month
-        } else {
-          // Accumulate interest (add to credit)
-          cumulativeInterest += monthlyInterest;
         }
 
         // Calculate projected BTC price and max credit line
@@ -364,7 +352,6 @@
 
         data.accumulatedCredit.push(accumulatedCredit);
         data.monthlyInterest.push(monthlyInterest);
-        data.cumulativeInterest.push(state.payInterestWithBtc ? 0 : cumulativeInterest);
         data.monthlyWithdrawal.push(currentWithdrawal);
         data.btcPriceProjection.push(projectedBtcPrice);
         data.maxCreditProjection.push(projectedMaxCredit);
@@ -380,18 +367,17 @@
       const maxCredit = calculateMaxCreditLine();
       elements.maxCreditLine.textContent = formatCurrency(maxCredit);
 
-      // Update breakdown table (first 12 months)
+      // Update breakdown table (first 24 months)
       const tbody = elements.breakdownTable;
       tbody.innerHTML = '';
 
-      for (let i = 0; i < 12 && i < data.labels.length; i++) {
+      for (let i = 0; i < 24 && i < data.labels.length; i++) {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${data.labels[i]}</td>
           <td>${formatCurrency(data.monthlyWithdrawal[i])}</td>
           <td>${formatCurrency(data.accumulatedCredit[i])}</td>
           <td>${formatCurrency(data.monthlyInterest[i])}</td>
-          <td>${formatCurrency(data.cumulativeInterest[i])}</td>
         `;
         tbody.appendChild(row);
       }
@@ -438,16 +424,6 @@
               pointRadius: 0,
               pointHitRadius: 10,
               yAxisID: 'y1'
-            },
-            {
-              label: 'Cumulative Interest',
-              data: data.cumulativeInterest,
-              borderColor: '#00d084',
-              backgroundColor: 'rgba(0, 208, 132, 0.1)',
-              fill: true,
-              tension: 0.4,
-              pointRadius: 0,
-              pointHitRadius: 10
             },
             {
               label: 'Bitcoin Price',
@@ -584,7 +560,6 @@
       state.payInterestWithBtc = elements.payInterestWithBtc.value === 'true';
 
       // Update legend visibility
-      elements.cumulativeInterestLegend.style.display = state.payInterestWithBtc ? 'none' : 'flex';
       elements.btcCollateralLegend.style.display = state.payInterestWithBtc ? 'flex' : 'none';
 
       // Update URL
