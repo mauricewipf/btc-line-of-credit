@@ -168,7 +168,7 @@
         <!-- Data Table -->
         <div class="btc-card">
           <div class="btc-card-header">
-            Monthly Breakdown (First 24 Months)
+            Monthly Breakdown (Until Credit Limit Reached)
           </div>
           <div class="btc-card-body">
             <div class="table-responsive">
@@ -381,11 +381,11 @@
       const maxCredit = calculateMaxCreditLine();
       elements.maxCreditLine.textContent = formatCurrency(maxCredit);
 
-      // Update breakdown table (first 24 months)
+      // Update breakdown table (show all months up to credit limit)
       const tbody = elements.breakdownTable;
       tbody.innerHTML = '';
 
-      for (let i = 0; i < 24 && i < data.labels.length; i++) {
+      for (let i = 0; i < data.labels.length; i++) {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${data.labels[i]}</td>
